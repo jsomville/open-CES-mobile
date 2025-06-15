@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useLayoutEffect, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,22 +7,44 @@ import {
   StyleSheet,
   Alert,
   Image,
+  BackHandler,
 } from 'react-native';
+import { useRouter, useNavigation } from 'expo-router';
 
 import logoImage from '@/assets/images/logo.png'
 
 import globalStyles from '../globalStyle';
 
-import { useRouter } from 'expo-router';
+import { login } from '@/services/auth'
+import { useFocusEffect } from '@react-navigation/native';
 
 const AuthScreen = () => {
   const router = useRouter();
+  const navigation = useNavigation();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('a@b.com');
+  const [password, setPassword] = useState('Test12345!');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null,
+      gestureEnabled: false,
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    console.log("Auth useEffect")
+    const backAction = () => true; // Prevent default behavior
+    const handler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => handler.remove();
+  }, []);
+
+  useFocusEffect(() => {
+    console.log("Auth useFocus Effect")
+  })
 
   const handleLogin = async () => {
-    console.log('Handle Login:', data);
+    console.log('Handle Login');
 
     if (!username || !password) {
       Alert.alert('Validation Error', 'Please enter both email and password');
@@ -30,26 +52,23 @@ const AuthScreen = () => {
     }
 
     try {
-      const base_url = "https://open-ces-production.up.railway.app";
-      const url = base_url + "/api/idp/login"
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await login(username, password);
+      if (response.status === 200){
+          //Lasy but should work
+          const token = response.data.accessToken;
+          global.token = token
+          global.email = username;
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+          console.log(token);
+
+          //Go to previous screen
+            router.back();
+      } else {
+        // Edge case: axios doesn't throw on 204, 201, etc.
+        console.warn('Unexpected status code:', response.status);
+
+        Alert.alert('Login Error', response.status);
       }
-
-      const data = await response.json();
-      console.log('Login success:', data);
-      Alert.alert('Success', 'Logged in successfully!');
-      // Navigate or store token here
-
     } catch (error) {
       console.error(error);
       Alert.alert('Login Error', error.message);
@@ -75,7 +94,7 @@ const AuthScreen = () => {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secureTextEntry={true}
       />
       </View>
       <View style={styles.buttonContainer}>
@@ -111,9 +130,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 16,
-  },
-  buttonContainer: {
-    marginTop: 10,
   },
 });
 
