@@ -2,7 +2,6 @@ import axios from 'axios';
 
 import { getBaseURL } from "./config"
 
-//const BASE_URL = "https://open-ces-production.up.railway.app";
 const BASE_URL = getBaseURL();
 
 export const getUserDetail = async (email) => {

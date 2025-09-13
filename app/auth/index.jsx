@@ -26,6 +26,7 @@ const AuthScreen = () => {
   const [password, setPassword] = useState('Test12345!');
 
   useLayoutEffect(() => {
+    console.log("Auth useLayoutEffect")
     navigation.setOptions({
       headerLeft: () => null,
       gestureEnabled: false,
@@ -59,10 +60,10 @@ const AuthScreen = () => {
           global.token = token
           global.email = username;
 
-          console.log(token);
+          //console.log(token);
 
           //Go to previous screen
-            router.back();
+          router.back();
       } else {
         // Edge case: axios doesn't throw on 204, 201, etc.
         console.warn('Unexpected status code:', response.status);
